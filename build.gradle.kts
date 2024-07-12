@@ -6,6 +6,8 @@ plugins {
     application
     id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
     id("io.gitlab.arturbosch.detekt") version ("1.23.3")
+    id("org.flywaydb.flyway") version ("10.15.2")
+    id("org.jooq.jooq-codegen-gradle") version ("3.19.10")
 }
 
 detekt {
@@ -29,6 +31,8 @@ val junitVersion: String by project
 val kotlinVersion: String by project
 val ktlintVersion: String by project
 val kotestVersion: String by project
+val h2dbVersion: String by project
+val flywayVersion: String by project
 
 ktlint {
     version.set(ktlintVersion)
@@ -36,6 +40,35 @@ ktlint {
 
 application {
     mainClass = "ru.yarsu.WebApplicationKt"
+}
+
+flyway {
+    url = "jdbc:h2:file:~/.h2Databases/testDB"
+    user = "sa"
+    locations = arrayOf<String>("filesystem:db/migrations")
+    flyway.cleanDisabled = false
+}
+
+jooq {
+    configuration {
+        jdbc {
+            driver = "org.h2.Driver"
+            url = "jdbc:h2:file:~/.h2Databases/testDB"
+            user = "sa"
+            password = ""
+        }
+        generator {
+            name = "org.jooq.codegen.KotlinGenerator"
+            database {
+                name = "org.jooq.meta.h2.H2Database"
+                inputSchema = "PUBLIC"
+            }
+            target {
+                packageName = "ru.yarsu.db.generated"
+                directory = "src/main/kotlin-generated"
+            }
+        }
+    }
 }
 
 tasks.withType<JavaExec> {
@@ -94,4 +127,9 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
+    implementation("com.h2database:h2:$h2dbVersion")
+    implementation("org.flywaydb:flyway-core:$flywayVersion")
+    jooqCodegen("com.h2database:h2:$h2dbVersion")
+    // https://mvnrepository.com/artifact/org.jooq/jooq-codegen-gradle
+    implementation("org.jooq:jooq:3.19.10")
 }

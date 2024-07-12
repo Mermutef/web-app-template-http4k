@@ -233,13 +233,11 @@ class HandlersContainer(
             storagesOperations.getAnnouncement,
             categoryLenses,
         )
-    val deleteAnnouncementForm = deleteAnnouncements.then(ShowDeleteAnnouncementFormHandler(htmlView))
+    val deleteAnnouncementForm = ShowDeleteAnnouncementFormHandler(htmlView)
     val deleteAnnouncement =
-        deleteAnnouncements.then(
-            DeleteAnnouncementHandler(
-                htmlView,
-                storagesOperations.getAnnouncement,
-                storagesOperations.deleteAnnouncement,
-            ),
+        DeleteAnnouncementHandler(
+            htmlView,
+            storagesOperations.getAnnouncement,
+            storagesOperations.deleteAnnouncement,
         )
 }

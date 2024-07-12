@@ -7,6 +7,7 @@ import org.http4k.core.Status
 import org.http4k.core.with
 import org.http4k.lens.RequestContextLens
 import ru.yarsu.domain.entities.Degree
+import ru.yarsu.domain.entities.GUEST_ID
 import ru.yarsu.domain.entities.Permissions
 import ru.yarsu.domain.entities.SPECIALIST_ID
 import ru.yarsu.domain.entities.Specialist
@@ -32,10 +33,10 @@ class SaveSpecialistHandler(
     private val degreeLenses: DegreeLenses,
 ) : HttpHandler {
     override fun invoke(request: Request): Response {
-        val specialist = getAuthUser(request) ?: return Response(Status.NOT_FOUND)
+        val specialist = getAuthUser(request)
         val specialistId = UniversalLenses.lensOrNull(UniversalLenses.idLens, request)
-        if (specialistId != specialist.id) {
-            if (!Permissions(specialist.permissions).manageUsers) {
+        if (specialistId != specialist?.id) {
+            if (!Permissions(specialist?.permissions ?: GUEST_ID).manageUsers) {
                 return Response(Status.NOT_FOUND)
             }
         }
@@ -48,9 +49,11 @@ class SaveSpecialistHandler(
         }
 
         val login = UniversalLenses.lensOrNull(SpecialistLenses.loginField, form)
-        if (!checkUniquenessOfLogin.checkUniqueness(login)) {
-            form = form.plus("loginIsNotUnique" to "Пользователь с данным логином уже существует")
-            haveErrors = true
+        if (specialist != null) {
+            if (!checkUniquenessOfLogin.checkUniqueness(login)) {
+                form = form.plus("loginIsNotUnique" to "Пользователь с данным логином уже существует")
+                haveErrors = true
+            }
         }
 
         if (form.errors.isNotEmpty() || password == null || login == null || haveErrors) {
@@ -88,8 +91,8 @@ class SaveSpecialistHandler(
                         SpecialistLenses.vkidField(form),
                         login,
                         password,
-                        specialistId?.let { specialist.registerDate } ?: registerDate,
-                        specialistId?.let { specialist.permissions } ?: SPECIALIST_ID,
+                        specialistId?.let { specialist?.registerDate } ?: registerDate,
+                        specialistId?.let { specialist?.permissions } ?: SPECIALIST_ID,
                     ),
                 )
             }",
