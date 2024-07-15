@@ -1,65 +1,75 @@
 package ru.yarsu.domain.storages
 
+import org.jooq.DSLContext
+import org.jooq.Record
+import org.jooq.impl.DSL.max
+import org.jooq.impl.QOM.Max
+import ru.yarsu.db.DatabaseMethods
+import ru.yarsu.db.SpecialistTableMethods.insertSpecialist
+import ru.yarsu.db.SpecialistTableMethods.selectSpecialists
+import ru.yarsu.db.SpecialistTableMethods.toSpecialist
+import ru.yarsu.db.generated.tables.references.USERS
 import ru.yarsu.domain.entities.Specialist
 
 class SpecialistStorage(
-    specialists: List<Specialist>,
+    private val context: DSLContext,
 ) {
-    private val storage: MutableMap<Int, Specialist>
-    private var firstFree: Int
+    private var firstFree =
+        context
+            .select(max(USERS.ID))
+            .from(USERS)
+            .fetchOne()
+            ?.value1()?.let { it + 1 } ?: 0
 
-    init {
-        if (specialists.isEmpty()) {
-            storage = mutableMapOf()
-            firstFree = 0
-        } else {
-            require(specialists.distinctBy { it.id }.size == specialists.size) {
-                "Обнаружено дублирование id в базе специалистов. Исправьте данные и повторите попытку."
-            }
-            require(specialists.distinctBy { it.login }.size == specialists.size) {
-                "Обнаружено дублирование имен пользователей в базе специалистов. Исправьте данные и повторите попытку."
-            }
-            storage = specialists.associateBy({ it.id }, { it }).toMutableMap()
-            firstFree = storage.values.maxOf { it.id } + 1
-        }
-    }
+    fun get(id: Int): Specialist? =
+        context
+            .selectSpecialists()
+            .where(USERS.ID.eq(id))
+            .fetchOne()
+            ?.toSpecialist()
 
-    fun get(id: Int): Specialist? = storage[id]
+    fun getAll(): List<Specialist> =
+        context
+            .selectSpecialists()
+            .fetch()
+            .mapNotNull { it.toSpecialist() }
 
-    fun getAll(): List<Specialist> = storage.values.toList()
-
-    fun getByLogin(login: String): Specialist? = storage.values.find { it.login == login }
+    fun getByLogin(login: String): Specialist? =
+        context
+            .selectSpecialists()
+            .where(USERS.LOGIN.eq(login))
+            .fetchOne()
+            ?.toSpecialist()
 
     fun add(specialist: Specialist): Int {
-        val existsSpecialist = findSpecialist(specialist)
-        if (existsSpecialist != null) {
-            return existsSpecialist
-        }
-        storage[firstFree] = specialist.copy(id = firstFree)
+        context.insertSpecialist(specialist.copy(id = firstFree))
         ++firstFree
         return firstFree - 1
     }
 
-    fun findSpecialist(specialist: Specialist): Int? {
-        storage.values.forEach { if (it == specialist) return it.id }
-        return null
-    }
-
-    @Synchronized
     fun edit(specialist: Specialist): Boolean {
-        if (storage.values.map { it.id }.contains(specialist.id)) {
-            storage[specialist.id] = specialist
-            return true
-        }
-        return false
+        return context.update(
+            USERS,
+        )
+            .set(USERS.FCS, specialist.fcs)
+            .set(USERS.PHONE, specialist.phone)
+            .set(USERS.VKID, specialist.vkId)
+            .set(USERS.LOGIN, specialist.login)
+            .set(USERS.PASSWORD, specialist.password.toByteArray())
+            .where(USERS.ID.eq(specialist.id))
+            .returningResult()
+            .fetchOne()
+            ?.toSpecialist()
+            ?.let { true } ?: false
     }
 
-    @Synchronized
     fun delete(id: Int): Boolean {
-        if (storage.values.map { it.id }.contains(id)) {
-            storage.remove(id)
-            return true
-        }
-        return false
+        return context
+            .deleteFrom(USERS)
+            .where(USERS.ID.eq(id))
+            .returningResult()
+            .fetchOne()
+            ?.toSpecialist()
+            ?.let { true } ?: false
     }
 }

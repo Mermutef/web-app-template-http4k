@@ -16,12 +16,6 @@ data class Specialist(
     val vkId: String,
     val login: String,
     val password: String,
-    @JsonProperty("registerDate")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
-    @JsonSerialize(using = LocalDateTimeSerializer::class)
-    @JsonDeserialize(
-        using = LocalDateTimeDeserializer::class,
-    )
     val registerDate: LocalDateTime,
     val permissions: Int,
 ) : Comparable<Specialist> {

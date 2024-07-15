@@ -1,51 +1,54 @@
 package ru.yarsu.domain.storages
 
+import org.jooq.DSLContext
+import org.jooq.impl.DSL.max
+import ru.yarsu.db.AnnouncementTableMethods.insertAnnouncement
+import ru.yarsu.db.AnnouncementTableMethods.selectAnnouncements
+import ru.yarsu.db.AnnouncementTableMethods.toAnnouncement
+import ru.yarsu.db.generated.tables.references.ANNOUNCEMENTS
 import ru.yarsu.domain.entities.Announcement
 
 class AnnouncementStorage(
-    announcements: List<Announcement>,
+    private val context: DSLContext,
 ) {
-    private val storage: MutableMap<Int, Announcement>
-    private var firstFree: Int
+    private var firstFree =
+        context
+            .select(max(ANNOUNCEMENTS.ID))
+            .from(ANNOUNCEMENTS)
+            .fetchOne()
+            ?.value1()?.let { it + 1 } ?: 0
 
-    init {
-        if (announcements.isEmpty()) {
-            storage = mutableMapOf()
-            firstFree = 0
-        } else {
-            require(announcements.distinctBy { it.id }.size == announcements.size) {
-                "Обнаружено дублирование id в базе объявлений. Исправьте данные и повторите попытку."
-            }
-            storage = announcements.associateBy({ it.id }, { it }).toMutableMap()
-            firstFree = storage.values.maxOf { it.id } + 1
-        }
-    }
+    fun get(id: Int): Announcement? = context.selectAnnouncements().where(ANNOUNCEMENTS.ID.eq(id)).fetchOne()?.toAnnouncement()
 
-    fun get(id: Int): Announcement? = storage[id]
-
-    fun getAll(): List<Announcement> = storage.values.toList()
+    fun getAll(): List<Announcement> = context.selectAnnouncements().fetch().mapNotNull { it.toAnnouncement() }
 
     fun add(announcement: Announcement): Int {
-        storage[firstFree] = announcement.copy(id = firstFree)
+        context.insertAnnouncement(announcement.copy(id = firstFree))
         ++firstFree
         return firstFree - 1
     }
 
-    @Synchronized
     fun edit(announcement: Announcement): Boolean {
-        if (storage.values.map { it.id }.contains(announcement.id)) {
-            storage[announcement.id] = announcement
-            return true
-        }
-        return false
+        return context.update(
+            ANNOUNCEMENTS,
+        )
+            .set(ANNOUNCEMENTS.TITLE, announcement.title)
+            .set(ANNOUNCEMENTS.DESCRIPTION, announcement.description)
+            .set(ANNOUNCEMENTS.CATEGORY, announcement.category)
+            .where(ANNOUNCEMENTS.ID.eq(announcement.id))
+            .returningResult()
+            .fetchOne()
+            ?.toAnnouncement()
+            ?.let { true } ?: false
     }
 
-    @Synchronized
     fun delete(id: Int): Boolean {
-        if (storage.values.map { it.id }.contains(id)) {
-            storage.remove(id)
-            return true
-        }
-        return false
+        return context
+            .deleteFrom(ANNOUNCEMENTS)
+            .where(ANNOUNCEMENTS.ID.eq(id))
+            .returningResult()
+            .fetchOne()
+            ?.toAnnouncement()
+            ?.let { true } ?: false
     }
 }

@@ -13,12 +13,6 @@ const val MAX_DESCRIPTION_LENGTH = 200
 
 data class Announcement(
     val id: Int,
-    @JsonProperty("date")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
-    @JsonSerialize(using = LocalDateTimeSerializer::class)
-    @JsonDeserialize(
-        using = LocalDateTimeDeserializer::class,
-    )
     val date: LocalDateTime,
     val category: Int,
     val title: String,

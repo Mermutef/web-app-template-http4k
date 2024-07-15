@@ -11,6 +11,6 @@ data class WebConfig(
         val portLens = EnvironmentKey.int().required("web.port")
         val defaultEnv = Environment.defaults(portLens of 9000)
 
-        fun makeWebConfig(env: Environment): WebConfig = WebConfig(portLens(env))
+        fun fromEnvironment(environment: Environment): WebConfig = WebConfig(portLens(environment))
     }
 }

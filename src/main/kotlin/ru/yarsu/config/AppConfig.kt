@@ -4,25 +4,22 @@ import org.http4k.cloudnative.env.Environment
 import java.io.File
 
 data class AppConfig(
-    val webPort: Int,
-    val authSalt: String,
-    val jwtSalt: String,
-    val dataStorage: String,
+    val webConfig: WebConfig,
+    val securityConfig: SecurityConfig,
+    val dbConfig: DataBaseConfig,
 ) {
     companion object {
         private val appEnv =
-            Environment.from(File("config/app.properties")) overrides
+            Environment.from(File("app.properties")) overrides
                 Environment.JVM_PROPERTIES overrides
                 Environment.ENV overrides
-                WebConfig.defaultEnv overrides
-                DataStorageConfig.defaultEnv
+                WebConfig.defaultEnv
 
         fun readConfiguration(): AppConfig =
             AppConfig(
-                WebConfig.makeWebConfig(appEnv).webPort,
-                SecurityConfig.makeSecurityConfig(appEnv).authSalt,
-                SecurityConfig.makeSecurityConfig(appEnv).jwtSalt,
-                DataStorageConfig.makeDBConfig(appEnv).dataStorage,
+                WebConfig.fromEnvironment(appEnv),
+                SecurityConfig.fromEnvironment(appEnv),
+                DataBaseConfig.fromEnvironment(appEnv),
             )
     }
 }
