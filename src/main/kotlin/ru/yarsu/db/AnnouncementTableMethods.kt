@@ -44,7 +44,7 @@ object AnnouncementTableMethods {
                 category = category,
                 title = title,
                 description = description,
-                specialist = specialist
+                specialist = specialist,
             )
         }
 }

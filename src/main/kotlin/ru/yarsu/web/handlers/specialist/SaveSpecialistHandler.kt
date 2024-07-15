@@ -4,11 +4,15 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.http4k.core.cookie.Cookie
+import org.http4k.core.cookie.cookie
 import org.http4k.core.with
 import org.http4k.lens.RequestContextLens
 import ru.yarsu.domain.entities.Degree
 import ru.yarsu.domain.entities.GUEST_ID
+import ru.yarsu.domain.entities.JwtTools
 import ru.yarsu.domain.entities.Permissions
+import ru.yarsu.domain.entities.SECONDS_IN_DAY
 import ru.yarsu.domain.entities.SPECIALIST_ID
 import ru.yarsu.domain.entities.Specialist
 import ru.yarsu.domain.operations.degree.AddDegreeOperation
@@ -20,6 +24,7 @@ import ru.yarsu.web.lenses.SpecialistLenses
 import ru.yarsu.web.lenses.UniversalLenses
 import ru.yarsu.web.models.NewSpecialistVM
 import ru.yarsu.web.templates.ContextAwareViewRender
+import java.time.Instant
 import java.time.LocalDateTime
 
 class SaveSpecialistHandler(
@@ -31,15 +36,17 @@ class SaveSpecialistHandler(
     private val checkUniquenessOfLogin: CheckUniquenessOfLoginOperation,
     private val specialistLenses: SpecialistLenses,
     private val degreeLenses: DegreeLenses,
+    private val jwtTools: JwtTools,
 ) : HttpHandler {
     override fun invoke(request: Request): Response {
         val specialist = getAuthUser(request)
         val specialistId = UniversalLenses.lensOrNull(UniversalLenses.idLens, request)
         if (specialistId != specialist?.id) {
-            if (!Permissions(specialist?.permissions ?: GUEST_ID).manageUsers) {
+            if (!Permissions(specialist?.permissions ?: GUEST_ID).manageUsers && specialist != null) {
                 return Response(Status.NOT_FOUND)
             }
         }
+
         var form = specialistLenses.allSpecialistFormLenses(request)
         var haveErrors = false
         val password = UniversalLenses.lensOrNull(SpecialistLenses.passwordField, form)
@@ -78,24 +85,29 @@ class SaveSpecialistHandler(
                 degrees.add(addDegree.add(Degree(-1, "course", degree)))
             }
         }
-
-        return Response(Status.FOUND).header(
+        val specialistRegistered =
+            updateSpecialist.update(
+                Specialist(
+                    specialistId ?: -1,
+                    SpecialistLenses.fcsField(form),
+                    degrees,
+                    SpecialistLenses.phoneField(form),
+                    SpecialistLenses.vkidField(form),
+                    login,
+                    password,
+                    specialistId?.let { specialist?.registerDate } ?: registerDate,
+                    specialistId?.let { specialist?.permissions } ?: SPECIALIST_ID,
+                ),
+            )
+        val jwt = jwtTools.createToken(specialistRegistered) ?: return Response(Status.NOT_FOUND)
+        return Response(Status.FOUND).cookie(
+            Cookie("auth", jwt).expires(
+                Instant.now()
+                    .plusSeconds(jwtTools.tokenLifetime * SECONDS_IN_DAY),
+            ).httpOnly(),
+        ).header(
             "Location",
-            "/users/${
-                updateSpecialist.update(
-                    Specialist(
-                        specialistId ?: -1,
-                        SpecialistLenses.fcsField(form),
-                        degrees,
-                        SpecialistLenses.phoneField(form),
-                        SpecialistLenses.vkidField(form),
-                        login,
-                        password,
-                        specialistId?.let { specialist?.registerDate } ?: registerDate,
-                        specialistId?.let { specialist?.permissions } ?: SPECIALIST_ID,
-                    ),
-                )
-            }",
+            "/users/$specialistRegistered",
         )
     }
 }

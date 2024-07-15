@@ -34,17 +34,6 @@ object SpecialistTableMethods {
             .fetchOne()
             ?.toSpecialist()
 
-    fun DSLContext.updateRole(
-        specialist: Specialist,
-        permissions: Int,
-    ): Specialist? =
-        this.update(USERS)
-            .set(USERS.PERMISSIONS, permissions)
-            .where(USERS.ID.eq(specialist.id))
-            .returningResult()
-            .fetchOne()
-            ?.toSpecialist()
-
     fun Record.toSpecialist(): Specialist? =
         DatabaseMethods.safeLet(
             this[USERS.ID],
@@ -66,7 +55,7 @@ object SpecialistTableMethods {
                 login = login,
                 password = password.decodeToString(),
                 registerDate = registerDate,
-                permissions = permissions
+                permissions = permissions,
             )
         }
 }

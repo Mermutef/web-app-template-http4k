@@ -18,11 +18,11 @@ class SpecialistListHandler(
     private val htmlView: ContextAwareViewRender,
     private val dateTimeFilter: DateTimeFilterOperation,
 ) : HttpHandler {
-    // dateIsCorrect определяет наличие/отсутствие атрибута hidden у элемента,
-    // сообщающем пользователю о неверных данных
-    private var dateIsCorrect = false
-
     override fun invoke(request: Request): Response {
+        // dateIsCorrect определяет наличие/отсутствие атрибута hidden у элемента,
+        // сообщающем пользователю о неверных данных
+        var dateIsCorrect = false
+
         val requestParameters =
             request
                 .uri

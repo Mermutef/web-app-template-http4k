@@ -34,11 +34,6 @@
                             {% endfor %}
                     </ul>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link"
-                       href="https://lms.crafted.su/web-app-development/2024-1-ivt-2/docs/labs/tasks/services/"
-                       target="_blank">Задание</a>
-                </li>
                 {% if permissions.addAnnouncements %}
                     <li class="nav-item">
                         <a class="nav-link"
@@ -71,6 +66,8 @@
                 {% block newSpecialistWithRole %}{% endblock %}
                 {% block editSpecialist %}{% endblock %}
                 {% block deleteSpecialist %}{% endblock %}
+            </ul>
+            <ul class="navbar-nav ms-auto">
                 {% if authUser is empty %}
                     {% block login %}
                         <li class="nav-item">

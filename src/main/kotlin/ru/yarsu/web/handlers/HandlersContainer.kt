@@ -64,11 +64,6 @@ class HandlersContainer(
             contextTools.userPermissionsLens,
             Permissions::addAnnouncements,
         )
-    private val deleteAnnouncements =
-        PermissionsFilter(
-            contextTools.userPermissionsLens,
-            Permissions::deleteAnnouncements,
-        )
     val home = HomeHandler(htmlView)
     val ping = PingHandler()
     val loginForm = ShowLoginFormHandler(htmlView)
@@ -102,6 +97,7 @@ class HandlersContainer(
             storagesOperations.checkUniquenessOfPassword,
             specialistLenses,
             degreeLenses,
+            jwtTools,
         )
     val specialist =
         RoleNameFilter(
@@ -134,6 +130,7 @@ class HandlersContainer(
             storagesOperations.checkUniquenessOfPassword,
             specialistLenses,
             degreeLenses,
+            jwtTools,
         )
     val editRoleForm =
         manageUsers.then(

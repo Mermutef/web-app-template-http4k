@@ -1,10 +1,7 @@
 package ru.yarsu.domain.storages
 
 import org.jooq.DSLContext
-import org.jooq.Record
 import org.jooq.impl.DSL.max
-import org.jooq.impl.QOM.Max
-import ru.yarsu.db.DatabaseMethods
 import ru.yarsu.db.SpecialistTableMethods.insertSpecialist
 import ru.yarsu.db.SpecialistTableMethods.selectSpecialists
 import ru.yarsu.db.SpecialistTableMethods.toSpecialist

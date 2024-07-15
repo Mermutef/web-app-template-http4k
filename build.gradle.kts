@@ -156,6 +156,9 @@ jooq {
 
 ktlint {
     version.set(ktlintVersion)
+    filter {
+        exclude("**/generated/**")
+    }
 }
 
 detekt {
