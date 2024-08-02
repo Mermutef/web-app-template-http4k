@@ -26,7 +26,7 @@ CREATE DATABASE prom;
 ```
 ### Для резервного копирования и восстановления
 ```bash
-exec -it -u postgres promdb bash
+docker exec -it -u postgres promdb bash
 ```
 #### Копирование
 ```chatinput
