@@ -1,6 +1,8 @@
 ﻿package ru.yarsu.domain.storages
 
-import org.jooq.DSLContext
+import ru.yarsu.domain.entities.Announcement
+import ru.yarsu.domain.entities.Category
+import ru.yarsu.domain.entities.Degree
 import ru.yarsu.domain.entities.Specialist
 import ru.yarsu.domain.operations.announcement.AnnouncementDateTimeFilterOperationImpl
 import ru.yarsu.domain.operations.announcement.ClearCategoryAnnouncementsOperationImpl
@@ -25,17 +27,14 @@ import ru.yarsu.domain.operations.specialist.EditSpecialistOperationImpl
 import ru.yarsu.domain.operations.specialist.GetSpecialistOperationImpl
 import ru.yarsu.domain.operations.specialist.SpecialistDateTimeFilterOperationImpl
 import ru.yarsu.domain.operations.specialist.UpdateSpecialistOperationImpl
-import kotlin.concurrent.thread
 
 class StoragesOperationsAndMethods(
-    salt: String,
-    context: DSLContext,
+    announcementStorage: AnnouncementStorage,
+    specialistStorage: SpecialistStorage,
+    categoryStorage: CategoryStorage,
+    degreeStorage: DegreeStorage,
+    val salt: String,
 ) {
-    private val announcementStorage: AnnouncementStorage = AnnouncementStorage(context)
-    private val specialistStorage: SpecialistStorage = SpecialistStorage(context)
-    private val categoryStorage: CategoryStorage = CategoryStorage(context)
-    private val degreeStorage: DegreeStorage = DegreeStorage(context)
-
     // announcement storage operations
     val getAnnouncement = GetAnnouncementOperationImpl(announcementStorage)
     val deleteAnnouncement = DeleteAnnouncementOperationImpl(announcementStorage)
@@ -48,7 +47,7 @@ class StoragesOperationsAndMethods(
 
     // specialist storage operations
     val getSpecialist = GetSpecialistOperationImpl(specialistStorage)
-    val updateSpecialist = UpdateSpecialistOperationImpl(specialistStorage, salt)
+    val updateSpecialist = UpdateSpecialistOperationImpl(specialistStorage)
     val editSpecialist = EditSpecialistOperationImpl(specialistStorage)
     val deleteSpecialist = DeleteSpecialistOperationImpl(specialistStorage)
     val checkUniquenessOfPassword = CheckUniquenessOfPasswordOperationImpl(specialistStorage)
@@ -68,16 +67,34 @@ class StoragesOperationsAndMethods(
     val getMainDegrees = GetMainDegreesOperationImpl(degreeStorage)
 
     fun specialistsByCategory(categoryId: Int): Map<Int, Specialist?> {
-        return getByCategory.getByCategory(categoryId).associateBy(
-            { it.specialist },
-            { getSpecialist.get(it.specialist) },
-        ).toMap()
+        return getByCategory
+            .getByCategory(categoryId)
+            .associateBy(
+                { it.specialist },
+                { getSpecialist.get(it.specialist) },
+            )
+            .toMap()
     }
 
-    fun regSDHook() =
-        Runtime.getRuntime().addShutdownHook(
-            thread(start = false) {
-                println("WebServer is shutting down")
-            },
-        )
+    companion object {
+        fun initAnnouncementStorage(announcements: List<Announcement>): AnnouncementStorage {
+            val storage = AnnouncementStorage(announcements)
+            return storage
+        }
+
+        fun initSpecialistStorage(specialists: List<Specialist>): SpecialistStorage {
+            val storage = SpecialistStorage(specialists)
+            return storage
+        }
+
+        fun initCategoryStorage(categories: List<Category>): CategoryStorage {
+            val storage = CategoryStorage(categories)
+            return storage
+        }
+
+        fun initDegreeStorage(degrees: List<Degree>): DegreeStorage {
+            val storage = DegreeStorage(degrees)
+            return storage
+        }
+    }
 }

@@ -19,8 +19,7 @@ buildscript {
 }
 
 repositories {
-    mavenCentral()
-    gradlePluginPortal()
+    maven("../mvn-repo")
 }
 
 sourceSets["main"].kotlin {
@@ -95,6 +94,16 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
+}
+
+tasks.register<Copy>("cacheLocal") {
+    from(File(gradle.gradleUserHomeDir, "caches/modules-2/files-2.1"))
+    into(projectDir.absolutePath + "/../mvn-repo")
+    eachFile {
+        val parts = this.path.split("/")
+        this.path = listOf(parts[0].replace('.', '/'), parts[1], parts[2], parts[4]).joinToString("/")
+    }
+    includeEmptyDirs = false
 }
 
 val appProperties =

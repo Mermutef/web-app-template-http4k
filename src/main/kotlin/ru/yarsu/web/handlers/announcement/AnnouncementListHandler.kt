@@ -22,11 +22,11 @@ class AnnouncementListHandler(
     private val dateTimeFilter: DateTimeFilterOperation,
     private val specialistsByCategory: (Int) -> Map<Int, Specialist?>,
 ) : HttpHandler {
-    override fun invoke(request: Request): Response {
-        // dateIsCorrect определяет наличие/отсутствие атрибута hidden у элемента,
-        // сообщающем пользователю о неверных данных
-        var dateIsCorrect = false
+    // dateIsCorrect определяет наличие/отсутствие атрибута hidden у элемента,
+    // сообщающем пользователю о неверных данных
+    private var dateIsCorrect = false
 
+    override fun invoke(request: Request): Response {
         val categoryId =
             UniversalLenses.lensOrNull(UniversalLenses.idLens, request)
                 ?: return Response(Status.NOT_FOUND)

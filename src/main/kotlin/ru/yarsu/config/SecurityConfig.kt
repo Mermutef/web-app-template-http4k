@@ -17,6 +17,6 @@ data class SecurityConfig(
             EnvironmentKey.nonEmptyString()
                 .required("jwt.salt", "Для работы приложения необходима соль для шифрования данных")
 
-        fun fromEnvironment(environment: Environment): SecurityConfig = SecurityConfig(authSaltLens(environment), jwtSaltLens(environment))
+        fun makeSecurityConfig(env: Environment): SecurityConfig = SecurityConfig(authSaltLens(env), jwtSaltLens(env))
     }
 }

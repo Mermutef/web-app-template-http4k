@@ -13,7 +13,7 @@
 <body>
 
 <nav class="navbar sticky-top navbar-expand-lg bg-{% block menuColor %}primary{% endblock %}" data-bs-theme="dark">
-    <div class="container">
+    <div class="container-fluid">
         <a class="navbar-brand" href="/">ПоискСпециалиста</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent"
@@ -33,6 +33,11 @@
                                href="/categories/{{ category.id }}">{{ category.ru }}</a>
                             {% endfor %}
                     </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="https://lms.crafted.su/web-app-development/2024-1-ivt-2/docs/labs/tasks/services/"
+                       target="_blank">Задание</a>
                 </li>
                 {% if permissions.addAnnouncements %}
                     <li class="nav-item">
@@ -61,13 +66,9 @@
                                href="/users"
                                target="_self">Пользователи</a>
                         </li>
-                    {% endif %}
-                {% endblock %}
-                {% block newSpecialistWithRole %}{% endblock %}
+                    {% endif %}{% endblock %}
                 {% block editSpecialist %}{% endblock %}
                 {% block deleteSpecialist %}{% endblock %}
-            </ul>
-            <ul class="navbar-nav ms-auto">
                 {% if authUser is empty %}
                     {% block login %}
                         <li class="nav-item">
