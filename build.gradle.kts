@@ -1,12 +1,10 @@
 import org.gradle.api.JavaVersion.VERSION_21
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.Properties
+import java.util.*
 
 plugins {
     kotlin("jvm") version "1.9.23"
     application
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
-    id("io.gitlab.arturbosch.detekt") version ("1.23.3")
     id("org.flywaydb.flyway") version ("10.13.0")
     id("org.jooq.jooq-codegen-gradle") version "3.19.10"
 }
@@ -19,7 +17,8 @@ buildscript {
 }
 
 repositories {
-    maven("../mvn-repo")
+    maven("mvn-repo")
+    mavenCentral()
 }
 
 sourceSets["main"].kotlin {
@@ -97,11 +96,11 @@ dependencies {
 }
 
 tasks.register<Copy>("cacheLocal") {
-    from(File(gradle.gradleUserHomeDir, "caches/modules-2/files-2.1"))
-    into(projectDir.absolutePath + "/../mvn-repo")
+    from(File("${gradle.gradleUserHomeDir}/caches/modules-2/files-2.1"))
+    into("${projectDir.absolutePath}/mvn-repo")
     eachFile {
         val parts = this.path.split("/")
-        this.path = listOf(parts[0].replace('.', '/'), parts[1], parts[2], parts[4]).joinToString("/")
+        this.path = "${parts[0].replace('.', '/')}/${parts[1]}/${parts[2]}/${parts[4]}"
     }
     includeEmptyDirs = false
 }
@@ -162,17 +161,3 @@ jooq {
         }
     }
 }
-
-ktlint {
-    version.set(ktlintVersion)
-    filter {
-        exclude("**/generated/**")
-    }
-}
-
-detekt {
-    allRules = true
-    buildUponDefaultConfig = true
-}
-
-apply(plugin = "kotlin")
