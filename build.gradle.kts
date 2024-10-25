@@ -1,6 +1,6 @@
 import org.gradle.api.JavaVersion.VERSION_21
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.*
+import java.util.Properties
 
 plugins {
     kotlin("jvm") version "1.9.23"
@@ -95,12 +95,48 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
 }
 
-tasks.register<Copy>("cacheLocal") {
+data class Dependency(
+    val group: String,
+    val name: String,
+    val version: String,
+    val extension: String,
+    val classifier: String
+)
+
+fun ConfigurationContainer.dependencyList(): List<Dependency> {
+    val dependencies = mutableListOf<Dependency>()
+    configurations.forEach { conf ->
+        if (conf.isCanBeResolved) {
+            conf.resolvedConfiguration.resolvedArtifacts.forEach { at ->
+                val dep = at.moduleVersion.id
+                dependencies.add(
+                    Dependency(
+                        group = dep.group,
+                        name = dep.name,
+                        version = dep.version,
+                        extension = at.extension ?: "",
+                        classifier = at.classifier ?: "",
+                    )
+                )
+            }
+        }
+    }
+    return dependencies
+}
+
+tasks.register<Copy>("resolveAndCacheLocal") {
     from(File("${gradle.gradleUserHomeDir}/caches/modules-2/files-2.1"))
     into("${projectDir.absolutePath}/mvn-repo")
+    val deps = configurations.dependencyList().map { "${it.group}:${it.name}:${it.version}" }
     eachFile {
         val parts = this.path.split("/")
-        this.path = "${parts[0].replace('.', '/')}/${parts[1]}/${parts[2]}/${parts[4]}"
+        val dep = "${parts[0]}:${parts[1]}:${parts[2]}"
+        if (dep in deps) {
+            this.path = "${parts[0].replace('.', '/')}/${parts[1]}/${parts[2]}/${parts[4]}"
+        } else {
+            this.exclude()
+            println("Excluded: $dep")
+        }
     }
     includeEmptyDirs = false
 }
