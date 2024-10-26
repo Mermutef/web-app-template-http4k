@@ -1,6 +1,6 @@
 import org.gradle.api.JavaVersion.VERSION_21
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.Properties
+import java.util.*
 
 plugins {
     kotlin("jvm") version "1.9.23"
@@ -93,6 +93,16 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
+}
+
+tasks.register<Copy>("cacheLocal") {
+    from(File("${gradle.gradleUserHomeDir}/caches/modules-2/files-2.1"))
+    into("${projectDir.absolutePath}/mvn-repo")
+    eachFile {
+        val parts = this.path.split("/")
+        this.path = "${parts[0].replace('.', '/')}/${parts[1]}/${parts[2]}/${parts[4]}"
+    }
+    includeEmptyDirs = false
 }
 
 data class Dependency(
